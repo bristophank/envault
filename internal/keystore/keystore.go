@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	DefaultKeysDir  = ".envault"
-	PrivateKeyFile  = "identity.txt"
-	PublicKeysFile  = "recipients.txt"
+	DefaultKeysDir = ".envault"
+	PrivateKeyFile = "identity.txt"
+	PublicKeysFile = "recipients.txt"
 )
 
 // Store manages age keys on disk.
@@ -49,14 +49,31 @@ func (s *Store) LoadPrivateKey() (string, error) {
 }
 
 // AddRecipient appends a public key to the recipients file.
+// It returns an error if the key is empty or already present.
 func (s *Store) AddRecipient(publicKey string) error {
+	publicKey = strings.TrimSpace(publicKey)
+	if publicKey == "" {
+		return errors.New("public key must not be empty")
+	}
+
+	// Check for duplicates before appending.
+	existing, err := s.LoadRecipients()
+	if err != nil {
+		return err
+	}
+	for _, k := range existing {
+		if k == publicKey {
+			return fmt.Errorf("recipient %s is already present", publicKey)
+		}
+	}
+
 	path := filepath.Join(s.BaseDir, PublicKeysFile)
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	_, err = fmt.Fprintln(f, strings.TrimSpace(publicKey))
+	_, err = fmt.Fprintln(f, publicKey)
 	return err
 }
 
