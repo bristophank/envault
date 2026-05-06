@@ -87,3 +87,27 @@ func TestDecryptInvalidKey(t *testing.T) {
 		t.Error("expected error when decrypting with wrong private key")
 	}
 }
+
+func TestEncryptProducesDifferentCiphertexts(t *testing.T) {
+	pub, _, err := crypto.GenerateKeyPair()
+	if err != nil {
+		t.Fatalf("GenerateKeyPair() error = %v", err)
+	}
+
+	plaintext := []byte("SECRET=value")
+
+	ciphertext1, err := crypto.Encrypt(plaintext, []string{pub})
+	if err != nil {
+		t.Fatalf("Encrypt() first call error = %v", err)
+	}
+	ciphertext2, err := crypto.Encrypt(plaintext, []string{pub})
+	if err != nil {
+		t.Fatalf("Encrypt() second call error = %v", err)
+	}
+
+	// age encryption uses ephemeral keys, so two encryptions of the same
+	// plaintext should produce different ciphertexts.
+	if bytes.Equal(ciphertext1, ciphertext2) {
+		t.Error("expected different ciphertexts for repeated encryptions of same plaintext")
+	}
+}
