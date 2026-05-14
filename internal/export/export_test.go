@@ -78,3 +78,16 @@ func TestExportUnknownFormat(t *testing.T) {
 		t.Fatal("expected error for unknown format")
 	}
 }
+
+func TestExportEmptyVars(t *testing.T) {
+	e := export.New()
+	for _, format := range []export.Format{export.FormatDotenv, export.FormatShell, export.FormatJSON} {
+		out, err := e.Export(map[string]string{}, format)
+		if err != nil {
+			t.Errorf("format %s: unexpected error for empty vars: %v", format, err)
+		}
+		if out == "" && format == export.FormatJSON {
+			t.Errorf("format %s: expected non-empty output for empty vars, got empty string", format)
+		}
+	}
+}
